@@ -491,7 +491,11 @@
     function requestLocation() {
       if (!navigator.geolocation) return;
       navigator.geolocation.getCurrentPosition(
-        (pos) => { latitude = pos.coords.latitude; longitude = pos.coords.longitude; },
+        (pos) => {
+          latitude = pos.coords.latitude;
+          longitude = pos.coords.longitude;
+          refreshTreeDistances();
+        },
         () => { document.getElementById('treeStatus').textContent = t('locationUnavailable'); },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
       );
@@ -581,6 +585,22 @@
         html += `<option value="${tree.id}">${ms.emoji} ${tree.id}${distText}</option>`;
       });
       select.innerHTML = html;
+    }
+    function refreshTreeDistances() {
+      // Geolocation resolves asynchronously (user prompt) — it can land after
+      // the dropdown was built. When it does, recompute distances and
+      // re-populate so the dropdown shows "N km / N m" and nearest-first order.
+      if (!treeIndex || latitude === null || longitude === null) return;
+      const select = document.getElementById('treeSelect');
+      const prev = select.value;
+      treeIndex.forEach(t => {
+        if (t.lat && t.lng) t._dist = haversine(parseFloat(latitude), parseFloat(longitude), t.lat, t.lng);
+      });
+      populateTreeDropdown(treeIndex);
+      // preserve current selection (deep-link or user) across the re-populate
+      if (prev && select.querySelector('option[value="' + CSS.escape(prev) + '"]')) {
+        select.value = prev;
+      }
     }
     function resetCaptures() {
       closeupBlob = null; contextBlob = null;
@@ -1052,13 +1072,9 @@
 
       statusEl.textContent = t('treeLoading');
       treeIndex = await loadTreeIndex();
-      if (treeIndex && latitude && longitude) {
-        treeIndex.forEach(t => {
-          if (t.lat && t.lng) t._dist = haversine(parseFloat(latitude), parseFloat(longitude), t.lat, t.lng);
-        });
+      if (treeIndex) {
         populateTreeDropdown(treeIndex);
-      } else if (treeIndex) {
-        populateTreeDropdown(treeIndex);
+        refreshTreeDistances();
       } else {
         document.getElementById('treeSelect').innerHTML = '<option value="">' + t('treeManual') + '</option>';
         document.getElementById('treeIdManual').style.display = 'block';
@@ -1094,7 +1110,7 @@
   <div class="container optional-section" style="text-align:center;">
     <h3 data-i18n="downloadHeading">Baixe o aplicativo Android</h3>
     <p class="hint" data-i18n="downloadHint">Prefere o aplicativo nativo? Funciona sem internet e salva os registros no seu celular.</p>
-    <a class="download-btn" href="https://github.com/TrueSightDAO/sunmint_mobile/releases/download/v0.1.0-android-uat/sunmint-android-uat.apk" data-i18n="downloadButton">Baixar APK (Android)</a>
+    <a class="download-btn" href="https://github.com/TrueSightDAO/sunmint_mobile/releases/download/v0.2.0-android/sunmint-android.apk" data-i18n="downloadButton">Baixar APK (Android)</a>
   </div>
 </body>
 </html>
