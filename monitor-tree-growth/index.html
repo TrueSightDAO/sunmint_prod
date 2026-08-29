@@ -75,9 +75,9 @@
       background: #f1f1f1; cursor: pointer; text-align: center; font-weight: bold; font-size: 0.9rem; }
     .photo-tab.active { background: #2e7d32; color: white; border-color: #2e7d32; }
     .photo-tab.done::after { content: ' ✓'; }
-    .photo-panel { border: 1px solid #ccc; border-top: none; border-radius: 0 0 6px 6px; padding: 0.8rem; }
+    .photo-panel { border: 1px solid #ccc; border-top: none; border-radius: 0 0 6px 6px; padding: 0.8rem; text-align: center; }
     .photo-panel[hidden] { display: none; }
-    .camera-viewport { width: 100%; border-radius: 6px; background: #000; min-height: 180px; margin-top: 0.5rem; }
+    .camera-viewport { width: 100%; max-width: 100%; max-height: 30vh; object-fit: cover; height: auto; border-radius: 6px; background: #000; min-height: 140px; margin-top: 0.5rem; }
     .status { margin-top: 0.6rem; font-size: 0.9rem; color: #1b5e20; }
     .status.error { color: #b71c1c; }
     .status.success { color: #1b5e20; }
@@ -87,9 +87,10 @@
     }
     .submission-result h3 { color: #333; }
     .nav-dropdown { margin-bottom: 1rem; text-align: center; }
-    .tree-detail { background: #f8f6f2; border: 1px solid #e5dfd3; border-radius: 8px; padding: 0.75rem; margin: 0.5rem 0 1rem; }
-    .tree-detail-photo { max-width: 100%; max-height: 220px; border-radius: 6px; margin-bottom: 0.5rem; object-fit: cover; }
+    .tree-detail { background: #f8f6f2; border: 1px solid #e5dfd3; border-radius: 8px; padding: 0.75rem; margin: 0.5rem 0 1rem; text-align: center; }
+    .tree-detail-photo { display: block; max-width: 100%; max-height: 220px; border-radius: 6px; margin: 0 auto 0.5rem; object-fit: cover; }
     .tree-detail-meta div { margin: 0.15rem 0; font-size: 0.9rem; }
+    #markInvalidBtn:disabled { background: #9e9e9e !important; color: #f5f5f5 !important; cursor: not-allowed !important; }
     .nav-dropdown select { max-width: 300px; display: inline-block; }
     .lang-toggle {
       display: flex;
@@ -167,11 +168,11 @@
         <div><strong data-i18n="detailStatus">Status:</strong> <span id="treeDetailStatus">—</span></div>
         <div><strong data-i18n="detailQr">QR Code:</strong> <span id="treeDetailQr">—</span></div>
         <div><strong data-i18n="detailMeasure">Measurement:</strong> <span id="treeDetailMeasure">—</span></div>
-        <div id="treeDetailNoPhoto" class="hint" data-i18n="detailNoPhoto" style="display:none;">Sem foto disponível para esta árvore.
-      <div id="invalidZone" style="display:none; margin-top:0.6rem;">
-        <button type="button" id="markInvalidBtn" onclick="markTreeInvalid()" style="background:#b23b3b;color:#fff;border:none;border-radius:6px;padding:0.5rem 0.9rem;font-size:0.9rem;">MARK INVALID</button>
+        <div id="treeDetailNoPhoto" class="hint" data-i18n="detailNoPhoto" style="display:none;">Sem foto disponível para esta árvore.</div>
+        <div id="invalidZone" style="display:none; margin-top:0.6rem;">
+        <button type="button" id="markInvalidBtn" onclick="markTreeInvalid()" style="cursor:pointer;background:#b23b3b;color:#fff;border:none;border-radius:6px;padding:0.5rem 0.9rem;font-size:0.9rem;" data-i18n="markInvalid">Marcar árvore como inválida</button>
         <p id="invalidNote" style="color:#b23b3b;font-size:0.85rem;display:none;"></p>
-      </div></div>
+        </div>
       </div>
     </div>
 
@@ -314,7 +315,8 @@
         invalidSent: 'Marcação de invalidação enviada (Reject Event)',
         invalidError: 'Falha ao enviar rejeição',
         govOnly: 'Somente governadores podem marcar árvores como inválidas',
-        invalidNote: 'Árvore marcada como INVÁLIDA — não pode ser medida'
+        invalidNote: 'Árvore marcada como INVÁLIDA — não pode ser medida',
+        invalidDone: 'Árvore marcada como INVÁLIDA. Selecione outra árvore.'
       },
       en: {
         title: 'Monitor Tree',
@@ -399,7 +401,8 @@
         invalidSent: 'Invalidation (Reject Event) sent',
         invalidError: 'Failed to send rejection',
         govOnly: 'Only governors can mark trees as invalid',
-        invalidNote: 'Tree marked INVALID — cannot be measured'
+        invalidNote: 'Tree marked INVALID — cannot be measured',
+        invalidDone: 'Tree marked INVALID. Select another tree.'
       }
     };
     const DEFAULT_LANG = (navigator.language || 'pt').toLowerCase().startsWith('pt') ? 'pt' : 'en';
@@ -637,19 +640,20 @@
       const ready = !!(closeupBlob && contextBlob);
       btn.disabled = !ready;
     }
-    function showPhotoSection() {
+    function showPhotoSection(startCameraNow) {
       document.getElementById('photoSection').style.display = 'block';
-      // Do NOT auto-start the camera here: on deep links (?tree=<id>) this runs
-      // during page load, outside a user gesture, and browsers reject
-      // getUserMedia (NotAllowedError), leaving a black camera-viewport.
-      // The camera starts on the first real interaction (tab click or button).
-      switchTab('closeup', false);
+      // Auto-start the camera ONLY on a real user gesture (dropdown pick or
+      // manual tree-ID typing). On deep links (?tree=<id>) this runs during
+      // page load, outside a gesture — browsers reject getUserMedia
+      // (NotAllowedError), leaving a black camera-viewport — so those callers
+      // pass false and the camera starts on the first real interaction.
+      switchTab('closeup', startCameraNow !== false);
     }
     function hidePhotoSection() {
       stopCamera();
       document.getElementById('photoSection').style.display = 'none';
     }
-    function onTreeSelectChange() {
+    function onTreeSelectChange(isDeepLinkInit) {
       const select = document.getElementById('treeSelect');
       const manual = document.getElementById('treeIdManual');
       const panel = document.getElementById('treeDetailPanel');
@@ -663,7 +667,10 @@
         renderTreeDetail(select.value);
         setTreeParam(select.value);
         resetCaptures();
-        showPhotoSection();
+        // User-gesture path (dropdown pick) starts the camera immediately;
+        // deep-link page-load init (isDeepLinkInit=true) stays deferred.
+        showPhotoSection(!isDeepLinkInit);
+        document.getElementById('markInvalidBtn').disabled = false;
         maybeShowInvalidZone();
       }
     }
@@ -1034,14 +1041,12 @@
       if (!treeId) return;
       if (!isCurrentUserGovernor()) { document.getElementById('treeStatus').textContent = t('govOnly'); document.getElementById('treeStatus').className = 'error'; return; }
       if (!confirm(t('markInvalidConfirm'))) return;
+      document.getElementById('markInvalidBtn').disabled = true;
       const statusEl = document.getElementById('treeStatus');
       statusEl.className = '';
       statusEl.textContent = t('invalidSent');
       try {
         const { publicKey, privateKey } = await ensureKeyPair();
-        const now = new Date();
-        const pad = (n) => n.toString().padStart(2, '0');
-        const yyyymmddhhmmss = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
         // The GAS handler matches the SunMint row by Telegram Message ID (col D).
         // Best available stable key from the client: the tree's QR code / tree id.
         const key = (treeIndex || []).find(t => t.id === treeId || t.qrCode === treeId);
@@ -1050,10 +1055,25 @@
         const requestText = `[TREE PLANTING REJECT EVENT]\n- QR Code: ${qrCode}\n- SunMint Submission Message ID: ${treeId}\n- Updated by: ${currentContributorName || 'unknown'}\n- Reason: ${reason}\n--------`;
         const signature = await signText(privateKey, requestText);
         const shareText = `${requestText}\n\nMy Digital Signature: ${publicKey}\n\nRequest Transaction ID: ${signature}\n\nThis submission was generated using ${window.location.href}\n\nVerify submission here: https://dapp.truesight.me/verify_request.html`;
-        const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(shareText)}`;
-        const ok = await navigator.share ? (() => { try { navigator.share({ text: shareText }); return true; } catch (_) { return false; } })() : false;
-        if (!ok) { prompt(t('invalidSent'), shareText); }
+        await queueMonitoring({
+          id: 'reject-' + treeId + '-' + Date.now(),
+          shareText,
+          createdAt: new Date().toISOString()
+        });
+        await updatePendingBadge();
+        statusEl.textContent = t('invalidDone');
+        statusEl.className = 'success';
+        treeIndex = (treeIndex || []).filter(t => t.id !== treeId && t.qrCode !== treeId);
+        populateTreeDropdown(treeIndex);
+        const select = document.getElementById('treeSelect');
+        select.value = '';
+        document.getElementById('treeDetailPanel').style.display = 'none';
+        document.getElementById('treeIdManual').style.display = 'block';
+        hidePhotoSection();
+        setTreeParam('');
+        flushQueue();
       } catch (e) {
+        document.getElementById('markInvalidBtn').disabled = false;
         statusEl.textContent = t('invalidError') + ': ' + e.message;
         statusEl.className = 'error';
       }
@@ -1136,6 +1156,9 @@
       }
     }
 
+    // ── auto-flush queued submissions when connectivity returns ───────
+    window.addEventListener('online', flushQueue);
+
     // ── init ──────────────────────────────────────────────────────────
     window.onload = async function () {
       setLang(currentLang);
@@ -1149,6 +1172,7 @@
       checkVerificationLink();
       renderEmailSection();
       updatePendingBadge();
+      flushQueue();
 
       statusEl.textContent = t('treeLoading');
       treeIndex = await loadTreeIndex();
@@ -1159,11 +1183,11 @@
         document.getElementById('treeSelect').innerHTML = '<option value="">' + t('treeManual') + '</option>';
         document.getElementById('treeIdManual').style.display = 'block';
       }
-      document.getElementById('treeSelect').addEventListener('change', onTreeSelectChange);
+      document.getElementById('treeSelect').addEventListener('change', function () { onTreeSelectChange(false); });
       document.getElementById('treeIdManual').addEventListener('input', function () {
         setTreeParam(this.value.trim());
         if (this.value.trim()) {
-          showPhotoSection();
+          showPhotoSection(true); // user typing — real gesture, start camera now
           maybeShowInvalidZone();
         } else {
           hidePhotoSection();
@@ -1178,7 +1202,7 @@
         const select = document.getElementById('treeSelect');
         if (match && select.querySelector('option[value="' + CSS.escape(match.id) + '"]')) {
           select.value = match.id;
-          onTreeSelectChange();
+          onTreeSelectChange(true); // deep-link init — defer camera start
           maybeShowInvalidZone();
         } else {
           document.getElementById('treeIdManual').value = urlTree;
@@ -1186,7 +1210,8 @@
           document.getElementById('treeDetailPanel').style.display = 'none';
           setTreeParam(urlTree);
           // show the capture UI even when the tree id isn't in the local index
-          showPhotoSection();
+          showPhotoSection(false); // deep-link init — defer camera start
+          maybeShowInvalidZone();
         }
       }
       statusEl.textContent = '';
