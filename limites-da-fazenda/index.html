@@ -10,7 +10,7 @@
     h1 { font-size: 1.8rem; color: #333; margin: 0.5rem 0 1rem; text-align: center; }
     h2 { font-size: 1.3rem; color: #333; margin: 0 0 1rem; }
     p.intro { color: #555; font-size: 1rem; line-height: 1.5; text-align: center; margin: 0 0 1.5rem; }
-    .nav-dropdown { text-align: center; margin-bottom: 1rem; width: 100%; max-width: 600px; }
+    .nav-dropdown { margin-bottom: 1rem; text-align: center; }
     .nav-dropdown select { max-width: 300px; display: inline-block; }
     .nav-dropdown label { font-weight: bold; margin-right: 0.4rem; display: inline; }
     .lang-toggle { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 1rem; }
@@ -36,6 +36,28 @@
     .photo-thumbs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
     .photo-thumbs img { width: 72px; height: 72px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; }
     .card { background: #fff; border-radius: 8px; padding: 1rem; margin: 14px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  
+    .media-grid { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 14px; }
+    .media-cell { position: relative; text-align: center; }
+    .media-cell img { display: block; border-radius: 4px; }
+    .media-cell.invalidated img { opacity: 0.35; filter: grayscale(1); }
+    .media-cell .retract-btn { margin-top: 3px; font-size: 11px; padding: 2px 8px; background: #e57373; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+    .media-cell .retract-btn:disabled { background: #ccc; cursor: not-allowed; }
+    .media-cell .badge { display: block; font-size: 10px; margin-top: 2px; padding: 1px 4px; border-radius: 3px; }
+    .badge.invalidado { background: #fdecea; color: #c62828; }
+    .badge.sentinel { background: #e3f2fd; color: #0d47a1; }
+    #retractModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 99; align-items: center; justify-content: center; }
+    #retractModal .modal-box { background: #fff; border-radius: 8px; padding: 16px; max-width: 420px; width: 92%; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+    #retractModal textarea { width: 100%; box-sizing: border-box; min-height: 64px; border: 1px solid #ccc; border-radius: 4px; padding: 6px; font-family: inherit; }
+    #retractModal .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
+    #retractModal .modal-actions button { padding: 6px 14px; border: none; border-radius: 4px; cursor: pointer; }
+    #retractModal .btn-cancel { background: #eee; color: #333; }
+    #retractModal .btn-confirm { background: #e57373; color: #fff; }
+    #retractStatus { margin-top: 8px; font-size: 12px; }
+    .media-cell { width: 64px; height: 64px; border-radius: 6px; overflow: hidden; border: 1px solid #ddd; }
+    .media-cell img { width: 100%; height: 100%; object-fit: cover; }
+    #mediaList { margin-bottom: 14px; }
+    #mediaList h3 { margin: 8px 0 4px; }
   </style>
 </head>
 <body>
@@ -44,31 +66,24 @@
     <button id="langEn" onclick="setLang('en')">English</button>
   </div>
 
-  <header style="width:100%; max-width:600px; text-align:center; margin-bottom:0.5rem;">
-    <div style="text-align:center;">
-      <img height="120px" src="https://github.com/TrueSightDAO/.github/blob/main/assets/20240612_truesight_dao_logo_square.png?raw=true" alt="TrueSight DAO Logo"/>
-      <h1 style="font-size:1.8rem; color:#333; margin:0.5rem 0;">Sunmint</h1>
-      <h2 style="font-size:1.1rem; color:#555; margin:0 0 0.5rem;" data-i18n="bHeading">Enviar fotos dos limites da fazenda</h2>
-    </div>
-  </header>
 
   <div class="nav-dropdown">
     <label for="pageNav" data-i18n="navLabel">Página:</label>
     <select id="pageNav" onchange="onNavChange()">
       <option value="plant" data-i18n="navPlant">Registrar Plantio</option>
       <option value="monitor" data-i18n="navMonitor">Monitorar Árvore</option>
-      <option value="farm" data-i18n="navFarm">Registrar Fazenda</option>
       <option value="limites" data-i18n="navLimites" selected>Limites da Fazenda</option>
       <option value="instrucoes" data-i18n="navInstrucoes">Instruções</option>
     </select>
   </div>
 
   <div class="container">
-  <main>
-    <div class="card">
-      <h2 data-i18n="bHeading">Enviar fotos dos limites da fazenda</h2>
-      <p class="hint" data-i18n="bHint">Caminhe pelos cantos da fazenda (pilar, cerca, beira da estrada) e tire fotos. O GPS da foto marca o limite.</p>
-
+    <div style="text-align:center;">
+      <img height="120px" src="https://github.com/TrueSightDAO/.github/blob/main/assets/20240612_truesight_dao_logo_square.png?raw=true" alt="TrueSight DAO Logo"/>
+      <h1>Sunmint</h1>
+    </div>
+    <p class="intro" data-i18n="bHeading">Enviar fotos dos limites da fazenda</p>
+    <p class="hint" data-i18n="bHint">Caminhe pelos cantos da fazenda (pilar, cerca, beira da estrada) e tire fotos. O GPS da foto marca o limite.</p>
       <label for="farmSelect" data-i18n="farmLabel">Fazenda:</label>
       <select id="farmSelect" onchange="onFarmSelectChange()">
         <option value="" data-i18n="farmLoading">Carregando fazendas...</option>
@@ -78,15 +93,27 @@
         <input type="text" id="newFarmName" placeholder="Ex: Sítio São João" data-i18n-placeholder="newFarmPh">
       </div>
 
+      <div id="mediaList" style="display:none;"></div>
+      <div id="retractModal">
+        <div class="modal-box">
+          <h4 id="retractModalTitle" style="margin:0 0 6px;"></h4>
+          <p id="retractModalMeta" class="hint" style="margin:0 0 8px; word-break:break-all;"></p>
+          <textarea id="retractReason" placeholder=""></textarea>
+          <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeRetractModal()"></button>
+            <button class="btn-confirm" onclick="confirmRetraction()"></button>
+          </div>
+          <div id="retractStatus"></div>
+        </div>
+      </div>
+
       <label for="photoInput" data-i18n="photoLabel">Fotos/vídeos dos limites:</label>
-      <input type="file" id="photoInput" accept="image/*,video/*" multiple capture="environment">
+      <input type="file" id="photoInput" accept="image/*,video/*" multiple>
       <div class="photo-thumbs" id="photoThumbs"></div>
 
       <button id="submitBtn" onclick="submitBoundary()" data-i18n="submitLabel">Enviar limites</button>
       <div id="status"></div>
       <div id="pendingBadge"></div>
-    </div>
-  </main>
   </div>
 
   <!-- Section (optional): Link email -->
@@ -121,6 +148,8 @@
 
   <script>
     const BOUNDARY_QUEUE_DB = 'sunmint-boundary-queue';
+    const RETRACTION_QUEUE_DB = 'sunmint-retraction-queue';
+    const RETRACTION_QUEUE_STORE = 'retractions';
     const BOUNDARY_QUEUE_STORE = 'boundary';
     const FARMS_DB = 'sunmint-farms';
     const FARMS_STORE = 'farms';
@@ -128,12 +157,13 @@
 
     const STRINGS = {
       'pt': {
-        navPlant:'Registrar Plantio', navMonitor:'Monitorar Árvore', navFarm:'Registrar Fazenda', navLimites:'Limites da Fazenda', navInstrucoes:'Instruções',
+        navPlant:'Registrar Plantio', navMonitor:'Monitorar Árvore', navLimites:'Limites da Fazenda', navInstrucoes:'Instruções',
         bHeading:'Enviar fotos dos limites da fazenda', bHint:'Caminhe pelos cantos da fazenda (pilar, cerca, beira da estrada) e tire fotos. O GPS da foto marca o limite.',
         farmLabel:'Fazenda:', farmLoading:'Carregando fazendas...', newFarmLabel:'Nome da nova fazenda:', newFarmPh:'Ex: Sítio São João',
         photoLabel:'Fotos/vídeos dos limites:', submitLabel:'Enviar limites',
-        farmSelectPh:'Selecione uma fazenda', newFarmOpt:'➕ Nova fazenda...', emptyFarms:'Nenhuma fazenda ainda — escolha "Nova fazenda"',
-        saved:'✅ Limites enviados (fila local). Enviará quando houver conexão.', queued:'⏳ Na fila offline — aguardando conexão.',
+        farmSelectPh:'Selecione uma fazenda',
+        mediaLoading:'Carregando m\u00eddias do plot...', mediaUnavailable:'N\u00e3o foi poss\u00edvel carregar as m\u00eddias.', mediaNone:'Nenhuma m\u00eddia de limite registrada para esta fazenda ainda.', mediaItems:'m\u00eddias', invalidar:'Invalidar', invalidado:'invalidado', sentinelBadge:'invalidado pelo Sentinel', retractTitle:'Invalidar m\u00eddia de limite', retractReasonPh:'Por que esta m\u00eddia deve ser invalidada?', retractCancel:'Cancelar', retractConfirm:'Enviar retrata\u00e7\u00e3o', reasonRequired:'Escreva um motivo.', retractionQueued:'Retrata\u00e7\u00e3o salva offline \u2014 ser\u00e1 enviada quando houver conex\u00e3o.', retractionSent:'Retrata\u00e7\u00e3o enviada \u2014 aguarde o processamento.', retractionErr:'Falha ao enviar retrata\u00e7\u00e3o.', noEmailForRetract:'Vincule seu email acima para poder invalidar m\u00eddias.', newFarmOpt:'➕ Nova fazenda...', emptyFarms:'Nenhuma fazenda ainda — escolha "Nova fazenda"',
+        saved:'✅ Limites enviados com sucesso.', queued:'⏳ Na fila offline — aguardando conexão.',
         noFarm:'Escolha ou digite o nome da fazenda.', noMedia:'Adicione pelo menos uma foto/vídeo.',
         err:'Erro ao salvar: ',
         emailHeading:'Vincular email (opcional)', emailHint:'Seu email é usado para identificá-lo na TrueSight DAO. Isso cria (ou reutiliza) sua assinatura digital neste telefone/navegador.',
@@ -146,12 +176,13 @@
         downloadHeading:'Baixe o aplicativo Android', downloadHint:'Prefere o aplicativo nativo? Funciona sem internet e salva os registros no seu celular.', downloadButton:'Baixar APK (Android)'
       },
       'en': {
-        navPlant:'Register Planting', navMonitor:'Monitor Tree', navFarm:'Register Farm', navLimites:'Farm Boundaries', navInstrucoes:'Instructions',
+        navPlant:'Register Planting', navMonitor:'Monitor Tree', navLimites:'Farm Boundaries', navInstrucoes:'Instructions',
         bHeading:'Send farm boundary photos', bHint:'Walk the farm corners (post, fence, roadside) and take photos. The photo GPS marks the boundary.',
         farmLabel:'Farm:', farmLoading:'Loading farms...', newFarmLabel:'New farm name:', newFarmPh:'E.g. Sítio São João',
         photoLabel:'Boundary photos/videos:', submitLabel:'Send boundaries',
-        farmSelectPh:'Select a farm', newFarmOpt:'➕ New farm...', emptyFarms:'No farms yet — choose "New farm"',
-        saved:'✅ Boundaries queued locally. Will send when online.', queued:'⏳ Offline queue — waiting for connection.',
+        farmSelectPh:'Select a farm',
+        mediaLoading:'Loading plot media...', mediaUnavailable:'Could not load media.', mediaNone:'No boundary media recorded for this farm yet.', mediaItems:'media items', invalidar:'Invalidate', invalidado:'invalidated', sentinelBadge:'invalidated by Sentinel', retractTitle:'Invalidate boundary media', retractReasonPh:'Why should this media be invalidated?', retractCancel:'Cancel', retractConfirm:'Submit retraction', reasonRequired:'Please write a reason.', retractionQueued:'Retraction saved offline \u2014 it will be sent when you are back online.', retractionSent:'Retraction submitted \u2014 awaiting processing.', retractionErr:'Failed to submit retraction.', noEmailForRetract:'Link your email above to invalidate media.', newFarmOpt:'➕ New farm...', emptyFarms:'No farms yet — choose "New farm"',
+        saved:'✅ Boundaries sent successfully.', queued:'⏳ Offline queue — waiting for connection.',
         noFarm:'Choose or type the farm name.', noMedia:'Add at least one photo/video.',
         err:'Error saving: ',
         emailHeading:'Link email (optional)', emailHint:'Your email identifies you in the TrueSight DAO. This creates (or reuses) your digital signature on this phone/browser.',
@@ -188,6 +219,14 @@
         if (k && t(k)) o.textContent = t(k);
       });
       renderFarmSelect();
+      const params = new URLSearchParams(location.search);
+      const f = (params.get('farm') || '').trim();
+      if (f) {
+        const sel = document.getElementById('farmSelect');
+        const hit = Array.from(sel.options || []).find(o => o.value && o.value.toLowerCase() === f.toLowerCase());
+        if (hit) { sel.value = hit.value; onFarmSelectChange(); }
+        else { renderMediaList(f); }
+      }
     }
 
     // ── device-local farm store (IndexedDB) ──
@@ -225,13 +264,31 @@
         return Array.isArray(data) ? data : (data.farms || []);
       } catch (e) { return []; }
     }
+    async function getRemotePlotNames() {
+      // Option A (plot-first): unlinked plots (empty farm_id) appear in the
+      // dropdown by their own plot name, so every plot is selectable on any
+      // device. Farm-linked plots are already represented by farm names.
+      try {
+        const res = await fetch(PLOTS_URL + '?cb=' + Date.now(), { cache: 'no-store' });
+        if (!res.ok) return [];
+        const data = await res.json();
+        const feats = (data && data.features) || [];
+        const out = [];
+        feats.forEach(f => {
+          const pr = (f && f.properties) || {};
+          if (!pr.farm_id && pr.name) out.push(String(pr.name));
+        });
+        return out;
+      } catch (e) { return []; }
+    }
     async function unionFarms() {
-      const [local, remote] = await Promise.all([getLocalFarms(), getRemoteFarms()]);
+      const [local, remote, plots] = await Promise.all([getLocalFarms(), getRemoteFarms(), getRemotePlotNames()]);
       const seen = new Set();
       const out = [];
-      [...local, ...remote].forEach(n => {
-        const key = String(n).trim().toLowerCase();
-        if (key && !seen.has(key)) { seen.add(key); out.push(String(n).trim()); }
+      [...local, ...remote, ...plots].forEach(n => {
+        const nm = (n && typeof n === 'object' && n.name) ? String(n.name) : String(n);
+        const key = nm.trim().toLowerCase();
+        if (key && !seen.has(key)) { seen.add(key); out.push(nm.trim()); }
       });
       return out;
     }
@@ -251,9 +308,79 @@
     function onFarmSelectChange() {
       const sel = document.getElementById('farmSelect');
       document.getElementById('newFarmWrap').style.display = (sel.value === '__new__') ? 'block' : 'none';
+      if (sel.value && sel.value !== '__new__') {
+        history.pushState(null, '', '?farm=' + encodeURIComponent(sel.value));
+      } else if (sel.value === '') {
+        history.pushState(null, '', location.pathname);
+      }
+      renderMediaList(sel.value);
     }
     function esc(s) {
       return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    // -- media submissions used to plot the selected farm --
+    const PLOTS_URL = 'https://raw.githubusercontent.com/TrueSightDAO/sunmint/main/plots/index.geojson';
+    const MEDIA_CDN = 'https://cdn.jsdelivr.net/gh/TrueSightDAO/sunmint@main/';
+    async function renderMediaList(farmName) {
+      const box = document.getElementById('mediaList');
+      if (!farmName || farmName === '__new__') { box.innerHTML = ''; box.style.display = 'none'; return; }
+      box.style.display = 'block';
+      box.innerHTML = '<p class="hint">' + t('mediaLoading') + '</p>';
+      let farmId = null;
+      try {
+        const res = await fetch(REMOTE_FARMS_URL + '?cb=' + Date.now(), { cache: 'no-store' });
+        if (res.ok) { const d = await res.json(); const arr = Array.isArray(d) ? d : (d.farms || []);
+          const hit = arr.find(x => x && (x.name||'').toLowerCase() === farmName.toLowerCase());
+          if (hit) farmId = hit.farm_id; }
+      } catch (e) {}
+      let slugId = String(farmName).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      if (!farmId) farmId = slugId;
+      try {
+        const res = await fetch(PLOTS_URL + '?cb=' + Date.now(), { cache: 'no-store' });
+        if (!res.ok) { box.innerHTML = '<p class="hint">' + t('mediaUnavailable') + '</p>'; return; }
+        const g = await res.json();
+        const nameL = farmName.toLowerCase();
+        const plots = (g.features || []).filter(f => {
+          const p = f.properties || {};
+          const nameL = farmName.toLowerCase();
+          return (farmId && p.farm_id === farmId) || (p.farm && String(p.farm).toLowerCase() === nameL) || (p.name && String(p.name).toLowerCase() === nameL);
+        });
+        let total = 0;
+        plots.forEach(pl => { total += (pl.properties.media || []).length; });
+        if (!total) { box.innerHTML = '<p class="hint">' + t('mediaNone') + '</p>'; return; }
+        let html = '<h3>' + esc(farmName) + '</h3>';
+        plots.forEach(pl => {
+          const p = pl.properties || {};
+          const items = p.media || [];
+          if (!items.length) return;
+          html += '<p class="hint"><strong>' + esc(p.plot_id || p.id || '') + '</strong> &mdash; ' + items.length + ' ' + t('mediaItems') + '</p>';
+          html += '<div class="media-grid">';
+          items.forEach(m => {
+            const src = (typeof m === 'object' && m.url) ? m.url : String(m);
+            const cdnsrc = src.startsWith('http') ? src : MEDIA_CDN + src;
+            const raw = src.startsWith('http') ? src : 'https://raw.githubusercontent.com/TrueSightDAO/sunmint/main/' + src;
+            const isObj = (typeof m === 'object');
+            const invalidated = isObj && m.invalidated;
+            const srcBy = isObj ? (m.invalidated_by || '') : '';
+            const sentinel = isObj && (m.retraction_source === 'sentinel' || String(srcBy).indexOf('sentinel') === 0);
+            const canRetract = !invalidated && getLinkedEmail();
+            html += '<div class="media-cell' + (invalidated ? ' invalidated' : '') + '">' +
+              '<img loading="lazy" src="' + esc(cdnsrc) + '" onerror="this.onerror=null;this.src=\'' + esc(raw) + '\';" alt="' + esc(src) + '"/>' +
+              (invalidated
+                ? '<span class="badge ' + (sentinel ? 'sentinel' : 'invalidado') + '">' + (sentinel ? t('sentinelBadge') : t('invalidado')) + '</span>'
+                : (canRetract
+                    ? '<button class="retract-btn" onclick="openRetractModal(\'' + esc(isObj ? (m.plot_id || m.plot || '') : '') + '\',\'' + esc(src) + '\')">' + t('invalidar') + '</button>'
+                    : (getLinkedEmail() ? '' : '<span class="badge invalidado" style="background:#f5f5f5;color:#999;">' + t('noEmailForRetract') + '</span>'))
+              ) +
+              '</div>';
+          });
+          html += '</div>';
+        });
+        box.innerHTML = html;
+      } catch (e) {
+        box.innerHTML = '<p class="hint">' + t('mediaUnavailable') + '</p>';
+      }
     }
 
     // ── photo previews ──
@@ -274,7 +401,10 @@
     function openQueueDB() {
       return new Promise((resolve, reject) => {
         const req = indexedDB.open(BOUNDARY_QUEUE_DB, 1);
-        req.onupgradeneeded = () => { req.result.createObjectStore(BOUNDARY_QUEUE_STORE, { keyPath: 'id', autoIncrement: true }); };
+        req.onupgradeneeded = () => {
+          if (!req.result.objectStoreNames.contains(BOUNDARY_QUEUE_STORE)) req.result.createObjectStore(BOUNDARY_QUEUE_STORE, { keyPath: 'id', autoIncrement: true });
+          if (!req.result.objectStoreNames.contains(RETRACTION_QUEUE_STORE)) req.result.createObjectStore(RETRACTION_QUEUE_STORE, { keyPath: 'id' });
+        };
         req.onsuccess = () => resolve(req.result);
         req.onerror = () => reject(req.error);
       });
@@ -363,6 +493,89 @@
       return data;
     }
     function getLinkedEmail() { return localStorage.getItem('sunmint_linked_email') || ''; }
+
+    // ---- media retraction (PR-B4): Invalidar button + reason modal + offline queue ----
+    let retractTarget = null; // { plotId, mediaUrl }
+    function openRetractModal(plotId, mediaUrl) {
+      retractTarget = { plotId: plotId, mediaUrl: mediaUrl };
+      document.getElementById('retractModalTitle').textContent = t('retractTitle');
+      document.getElementById('retractModalMeta').textContent = (plotId ? (plotId + ' \u00b7 ') : '') + mediaUrl;
+      const reason = document.getElementById('retractReason');
+      reason.value = '';
+      reason.placeholder = t('retractReasonPh');
+      document.querySelector('#retractModal .btn-cancel').textContent = t('retractCancel');
+      document.querySelector('#retractModal .btn-confirm').textContent = t('retractConfirm');
+      document.getElementById('retractStatus').textContent = '';
+      document.getElementById('retractModal').style.display = 'flex';
+    }
+    function closeRetractModal() {
+      document.getElementById('retractModal').style.display = 'none';
+      retractTarget = null;
+    }
+    async function flushRetractionQueue() {
+      let db = null;
+      try { db = await openQueueDB(); } catch (_) { return; }
+      try {
+        const tx = db.transaction(RETRACTION_QUEUE_STORE, 'readonly');
+        const store = tx.objectStore(RETRACTION_QUEUE_STORE);
+        const rows = await new Promise((res, rej) => { const r = store.getAll(); r.onsuccess = () => res(r.result || []); r.onerror = () => rej(r.error); });
+        if (!rows.length) return;
+        for (const row of rows) {
+          try {
+            const formData = new FormData();
+            formData.append('text', row.shareText);
+            const resp = await fetch(EDGAR_SUBMIT_URL, { method: 'POST', body: formData });
+            if (!resp.ok) continue;
+            const tx2 = db.transaction(RETRACTION_QUEUE_STORE, 'readwrite');
+            const store2 = tx2.objectStore(RETRACTION_QUEUE_STORE);
+            await new Promise((res, rej) => { const r = store2.delete(row.id); r.onsuccess = () => res(); r.onerror = () => rej(r.error); });
+          } catch (_) { /* keep row for next attempt */ }
+        }
+      } catch (_) {}
+    }
+    async function confirmRetraction() {
+      const reason = document.getElementById('retractReason').value.trim();
+      const statusEl = document.getElementById('retractStatus');
+      if (!retractTarget) return;
+      if (!reason) { statusEl.textContent = t('reasonRequired'); return; }
+      const email = getLinkedEmail();
+      if (!email) { statusEl.textContent = t('noEmailForRetract'); return; }
+      try {
+        const { publicKey, privateKey } = await ensureKeyPair();
+        const attrs = {
+          'Plot ID': retractTarget.plotId,
+          'Media URLs': retractTarget.mediaUrl,
+          'Reason': reason,
+          'Retractor Email': email,
+          'Retraction Source': 'farmer'
+        };
+        const attrLines = Object.entries(attrs).map(([k, v]) => '- ' + k + ': ' + v).join('\n');
+        const requestText = '[MEDIA RETRACTION EVENT]\n' + attrLines + '\n--------';
+        const signature = await signText(privateKey, requestText);
+        const shareText = requestText + '\n\nMy Digital Signature: ' + publicKey +
+          '\n\nRequest Transaction ID: ' + signature +
+          '\n\nThis submission was generated using ' + window.location.href +
+          '\n\nVerify submission here: https://dapp.truesight.me/verify_request.html';
+        if (!navigator.onLine) {
+          const db = await openQueueDB();
+          const tx = db.transaction(RETRACTION_QUEUE_STORE, 'readwrite');
+          tx.objectStore(RETRACTION_QUEUE_STORE).add({ shareText: shareText, id: 'retr-' + Date.now() });
+          statusEl.textContent = t('retractionQueued');
+        } else {
+          const formData = new FormData();
+          formData.append('text', shareText);
+          const resp = await fetch(EDGAR_SUBMIT_URL, { method: 'POST', body: formData });
+          const rawText = await resp.text();
+          if (!resp.ok) throw new Error(rawText || ('HTTP ' + resp.status));
+          statusEl.textContent = t('retractionSent');
+        }
+        closeRetractModal();
+        setTimeout(() => renderMediaList(String((document.getElementById('farmSelect') || {}).value || '')), 1500);
+      } catch (e) {
+        statusEl.textContent = t('retractionErr');
+      }
+    }
+
     function renderEmailSection() {
       const linked = getLinkedEmail();
       const unlinkedEl = document.getElementById('emailUnlinked');
@@ -396,6 +609,41 @@
     }
 
     // ── submit ──
+    async function buildBoundaryShareText(farmName, isNewFarm) {
+      const { publicKey, privateKey } = await ensureKeyPair();
+      const attrs = {
+        'Farm Name': farmName,
+        'Is New Farm': isNewFarm ? 'yes' : 'no',
+        'Media URLs': selectedFiles.map(f => f.name).join('; '),
+        'Media Count': String(selectedFiles.length),
+        'Captured At': new Date().toISOString(),
+        'Device GPS': JSON.stringify(await getDeviceGps()),
+        'Submission Source': 'sunmint-limites-da-fazenda'
+      };
+      const attrLines = Object.entries(attrs).map(([k, v]) => '- ' + k + ': ' + v).join('\n');
+      const requestText = '[FARM BOUNDARY EVIDENCE EVENT]\n' + attrLines + '\n--------';
+      const signature = await signText(privateKey, requestText);
+      return requestText + '\n\nMy Digital Signature: ' + publicKey +
+        '\n\nRequest Transaction ID: ' + signature +
+        '\n\nThis submission was generated using ' + window.location.href +
+        '\n\nVerify submission here: https://dapp.truesight.me/verify_request.html';
+    }
+    async function uploadBoundary(record) {
+      const formData = new FormData();
+      formData.append('text', record.shareText);
+      for (const m of (record.mediaBlobs || [])) {
+        formData.append('attachment', m.blob, m.name);
+      }
+      const resp = await fetch(EDGAR_SUBMIT_URL, { method: 'POST', body: formData });
+      const rawText = await resp.text();
+      let data = {};
+      try { data = rawText ? JSON.parse(rawText) : {}; } catch (_) { data = {}; }
+      // 409 = Edgar already processed this exact signed request — treat as success.
+      if (!resp.ok && resp.status !== 409) {
+        throw new Error((data && data.error) || rawText || ('HTTP ' + resp.status));
+      }
+      return data;
+    }
     async function submitBoundary() {
       const status = document.getElementById('status');
       const farmSel = document.getElementById('farmSelect');
@@ -418,18 +666,73 @@
         status: 'queued'
       };
       try {
+        const shareText = await buildBoundaryShareText(farmName, record.is_new_farm);
+        record.shareText = shareText;
+        record.mediaBlobs = selectedFiles.map(f => ({ name: f.name, blob: f }));
+        const online = navigator.onLine;
+        if (online) {
+          try {
+            await uploadBoundary(record);
+            status.className = 'ok';
+            status.textContent = t('saved');
+            resetBoundaryForm();
+            updatePendingBadge();
+            return;
+          } catch (_) {
+            // online but upload failed — fall through to queue (retry on reconnect)
+          }
+        }
         await queueBoundary(record);
         status.className = 'ok';
-        status.textContent = navigator.onLine ? t('saved') : t('queued');
-        selectedFiles = [];
-        document.getElementById('photoInput').value = '';
-        document.getElementById('photoThumbs').innerHTML = '';
+        status.textContent = t('queued');
+        resetBoundaryForm();
         updatePendingBadge();
       } catch (e) {
         status.className = 'err';
         status.textContent = t('err') + e.message;
       }
     }
+    function resetBoundaryForm() {
+      selectedFiles = [];
+      document.getElementById('photoInput').value = '';
+      document.getElementById('photoThumbs').innerHTML = '';
+    }
+    async function getPendingBoundary() {
+      const db = await openQueueDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(BOUNDARY_QUEUE_STORE, 'readonly');
+        const req = tx.objectStore(BOUNDARY_QUEUE_STORE).getAll();
+        req.onsuccess = () => resolve((req.result || []).filter(r => !r.uploaded));
+        req.onerror = () => reject(req.error);
+      });
+    }
+    async function markBoundaryUploaded(id) {
+      const db = await openQueueDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(BOUNDARY_QUEUE_STORE, 'readwrite');
+        const store = tx.objectStore(BOUNDARY_QUEUE_STORE);
+        const getReq = store.get(id);
+        getReq.onsuccess = () => {
+          const rec = getReq.result;
+          if (rec) { rec.uploaded = true; rec.uploadedAt = new Date().toISOString(); store.put(rec); }
+        };
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+    async function flushBoundaryQueue() {
+      let pending;
+      try { pending = await getPendingBoundary(); } catch (_) { return; }
+      if (!pending.length) return;
+      for (const record of pending) {
+        try {
+          await uploadBoundary(record);
+          await markBoundaryUploaded(record.id);
+        } catch (_) { /* offline — leave queued */ }
+      }
+      updatePendingBadge();
+    }
+
     function getDeviceGps() {
       return new Promise((resolve) => {
         if (!navigator.geolocation) return resolve(null);
@@ -445,13 +748,15 @@
       const select = document.getElementById('pageNav');
       if (select.value === 'plant') window.location.href = '/';
       else if (select.value === 'monitor') window.location.href = '/monitor-tree-growth/';
-      else if (select.value === 'farm') window.location.href = '/register_farm/';
+      else if (select.value === 'limites') window.location.href = '/limites-da-fazenda/';
       else if (select.value === 'instrucoes') window.location.href = '/instrucoes/';
     }
 
     setLang(currentLang);
     renderEmailSection();
     updatePendingBadge();
+    flushBoundaryQueue();
+    window.addEventListener('online', flushBoundaryQueue);
   </script>
 
   <!-- Offline support: network-first service worker -->
